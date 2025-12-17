@@ -31,7 +31,7 @@ export const config = {
   },
 
   admin: {
-    email: optionalEnv('ADMIN_EMAIL', 'admin@localhost'),
+    email: optionalEnv('ADMIN_EMAIL', 'admin@example.com'),
     password: optionalEnv('ADMIN_PASSWORD', 'changeme'),
   },
 
