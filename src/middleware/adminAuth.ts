@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import type { JWTPayload } from '../types/index.js';
-import '../types/fastify.js';
 
 export async function adminAuth(
   request: FastifyRequest,

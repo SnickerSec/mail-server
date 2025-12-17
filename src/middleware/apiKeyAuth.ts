@@ -2,7 +2,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma.js';
 import { getKeyPrefix } from '../lib/crypto.js';
-import '../types/fastify.js';
 
 export async function apiKeyAuth(
   request: FastifyRequest,
