@@ -20,14 +20,14 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@fastify/cors": "^9.0.1",
+    "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
-    "@fastify/rate-limit": "^9.1.0",
-    "@fastify/static": "^7.0.4",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^8.3.0",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
-    "fastify": "^4.28.1",
+    "fastify": "^5.6.2",
     "node-forge": "^1.3.1",
     "nodemailer": "^7.0.11",
     "zod": "^3.23.8"
