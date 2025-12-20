@@ -69,18 +69,20 @@ export async function buildServer() {
     await fastify.register(fastifyStatic, {
       root: publicPath,
       prefix: '/',
+      wildcard: false,
     });
 
-    fastify.setNotFoundHandler((request, reply) => {
+    // SPA fallback - serve index.html for all non-API routes
+    fastify.setNotFoundHandler(async (request, reply) => {
       if (request.url.startsWith('/api/')) {
         return reply.status(404).send({ error: 'Not found' });
       }
-      return reply.sendFile('index.html');
+      return reply.sendFile('index.html', publicPath);
     });
   } catch (err) {
     fastify.log.warn('Public directory not found, dashboard will not be served');
 
-    fastify.setNotFoundHandler((request, reply) => {
+    fastify.setNotFoundHandler(async (request, reply) => {
       return reply.status(404).send({ error: 'Not found' });
     });
   }
