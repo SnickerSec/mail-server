@@ -69,7 +69,6 @@ export async function buildServer() {
     await fastify.register(fastifyStatic, {
       root: publicPath,
       prefix: '/',
-      decorateReply: false,
     });
 
     fastify.setNotFoundHandler((request, reply) => {
