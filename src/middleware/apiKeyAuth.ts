@@ -6,19 +6,17 @@ import { getKeyPrefix } from '../lib/crypto.js';
 export async function apiKeyAuth(
   request: FastifyRequest,
   reply: FastifyReply
-): Promise<void> {
+): Promise<FastifyReply | void> {
   const authHeader = request.headers.authorization;
 
   if (!authHeader) {
-    reply.status(401).send({ error: 'Missing Authorization header' });
-    return;
+    return reply.status(401).send({ error: 'Missing Authorization header' });
   }
 
   const [scheme, key] = authHeader.split(' ');
 
   if (scheme !== 'Bearer' || !key) {
-    reply.status(401).send({ error: 'Invalid Authorization format. Use: Bearer <api_key>' });
-    return;
+    return reply.status(401).send({ error: 'Invalid Authorization format. Use: Bearer <api_key>' });
   }
 
   const keyPrefix = getKeyPrefix(key);
@@ -39,13 +37,11 @@ export async function apiKeyAuth(
     if (isValid) {
       // Check if key has expired
       if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-        reply.status(401).send({ error: 'API key has expired' });
-        return;
+        return reply.status(401).send({ error: 'API key has expired' });
       }
 
       if (!apiKey.domain.isActive) {
-        reply.status(403).send({ error: 'Domain is not active' });
-        return;
+        return reply.status(403).send({ error: 'Domain is not active' });
       }
 
       await prisma.apiKey.update({
@@ -63,5 +59,5 @@ export async function apiKeyAuth(
     }
   }
 
-  reply.status(401).send({ error: 'Invalid API key' });
+  return reply.status(401).send({ error: 'Invalid API key' });
 }
