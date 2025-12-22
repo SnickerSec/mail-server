@@ -1,7 +1,11 @@
 import dns from 'dns';
 import { promisify } from 'util';
 
-const resolveTxt = promisify(dns.resolveTxt);
+// Use Google's public DNS for more reliable lookups
+const resolver = new dns.Resolver();
+resolver.setServers(['8.8.8.8', '8.8.4.4']);
+
+const resolveTxt = promisify(resolver.resolveTxt.bind(resolver));
 
 export interface DnsVerificationResult {
   spf: { valid: boolean; found: string | null; expected: string };
