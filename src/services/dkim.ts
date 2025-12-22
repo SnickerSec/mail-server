@@ -1,4 +1,5 @@
 import forge from 'node-forge';
+import { config } from '../config.js';
 
 export interface DkimKeyPair {
   privateKey: string;
@@ -35,7 +36,9 @@ export function getDnsRecords(domain: string, selector: string, publicKey: strin
     spf: {
       type: 'TXT',
       host: domain,
-      value: 'v=spf1 a mx ~all',
+      value: config.brevo.apiKey
+        ? 'v=spf1 include:brevo.com ~all'
+        : 'v=spf1 a mx ~all',
       ttl: 3600,
     },
     dmarc: {
