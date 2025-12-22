@@ -41,6 +41,12 @@ function DomainDetail() {
   const [newKeyName, setNewKeyName] = useState('');
   const [creatingKey, setCreatingKey] = useState(false);
   const [newKeyRaw, setNewKeyRaw] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<{
+    spf: { valid: boolean; found: string | null };
+    dkim: { valid: boolean; found: string | null };
+    dmarc: { valid: boolean; found: string | null };
+  } | null>(null);
 
   const fetchData = async () => {
     if (!id) return;
@@ -106,6 +112,24 @@ function DomainDetail() {
     navigator.clipboard.writeText(text);
   };
 
+  const handleVerifyDns = async () => {
+    if (!id) return;
+    setVerifying(true);
+    setError('');
+
+    try {
+      const result = await api.verifyDomain(id);
+      setVerificationResult((result as any).verification);
+      if ((result as any).domain) {
+        setDomain(prev => prev ? { ...prev, isVerified: (result as any).domain.isVerified } : null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to verify DNS');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   if (loading) {
     return <div className="empty-state">Loading...</div>;
   }
@@ -156,10 +180,41 @@ function DomainDetail() {
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ marginBottom: '1rem' }}>DNS Records</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2>DNS Records</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span className={`badge ${domain.isVerified ? 'badge-success' : 'badge-warning'}`}>
+              {domain.isVerified ? 'Verified' : 'Unverified'}
+            </span>
+            <button
+              className="btn btn-primary"
+              onClick={handleVerifyDns}
+              disabled={verifying}
+            >
+              {verifying ? 'Verifying...' : 'Verify DNS'}
+            </button>
+          </div>
+        </div>
         <p style={{ color: 'var(--gray-500)', marginBottom: '1rem', fontSize: '0.875rem' }}>
           Add these DNS records to your domain to enable DKIM signing and improve deliverability.
         </p>
+
+        {verificationResult && (
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+            <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Verification Results:</div>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <span className={`badge ${verificationResult.spf.valid ? 'badge-success' : 'badge-danger'}`}>
+                SPF: {verificationResult.spf.valid ? '✓' : '✗'}
+              </span>
+              <span className={`badge ${verificationResult.dkim.valid ? 'badge-success' : 'badge-danger'}`}>
+                DKIM: {verificationResult.dkim.valid ? '✓' : '✗'}
+              </span>
+              <span className={`badge ${verificationResult.dmarc.valid ? 'badge-success' : 'badge-danger'}`}>
+                DMARC: {verificationResult.dmarc.valid ? '✓' : '✗'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {dnsRecords && (
           <div>
