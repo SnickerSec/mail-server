@@ -219,7 +219,7 @@ function DomainDetail() {
         {dnsRecords && (
           <div>
             <div className="dns-record">
-              <div className="dns-record-label">SPF Record</div>
+              <div className="dns-record-label">SPF Record ({dnsRecords.spf.type})</div>
               <div className="dns-record-host">
                 Host: <code>{dnsRecords.spf.host}</code>
               </div>
@@ -235,25 +235,63 @@ function DomainDetail() {
               </div>
             </div>
 
-            <div className="dns-record">
-              <div className="dns-record-label">DKIM Record</div>
-              <div className="dns-record-host">
-                Host: <code>{dnsRecords.dkim.host}</code>
+            {/* Show single DKIM for self-hosted, or two DKIM CNAMEs for Brevo */}
+            {(dnsRecords as any).dkim ? (
+              <div className="dns-record">
+                <div className="dns-record-label">DKIM Record ({(dnsRecords as any).dkim.type})</div>
+                <div className="dns-record-host">
+                  Host: <code>{(dnsRecords as any).dkim.host}</code>
+                </div>
+                <div className="code-block">
+                  {(dnsRecords as any).dkim.value}
+                  <button
+                    className="btn btn-secondary copy-btn"
+                    onClick={() => copyToClipboard((dnsRecords as any).dkim.value)}
+                    style={{ float: 'right' }}
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
-              <div className="code-block">
-                {dnsRecords.dkim.value}
-                <button
-                  className="btn btn-secondary copy-btn"
-                  onClick={() => copyToClipboard(dnsRecords.dkim.value)}
-                  style={{ float: 'right' }}
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="dns-record">
+                  <div className="dns-record-label">DKIM Record 1 ({(dnsRecords as any).dkim1.type})</div>
+                  <div className="dns-record-host">
+                    Host: <code>{(dnsRecords as any).dkim1.host}</code>
+                  </div>
+                  <div className="code-block">
+                    {(dnsRecords as any).dkim1.value}
+                    <button
+                      className="btn btn-secondary copy-btn"
+                      onClick={() => copyToClipboard((dnsRecords as any).dkim1.value)}
+                      style={{ float: 'right' }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+                <div className="dns-record">
+                  <div className="dns-record-label">DKIM Record 2 ({(dnsRecords as any).dkim2.type})</div>
+                  <div className="dns-record-host">
+                    Host: <code>{(dnsRecords as any).dkim2.host}</code>
+                  </div>
+                  <div className="code-block">
+                    {(dnsRecords as any).dkim2.value}
+                    <button
+                      className="btn btn-secondary copy-btn"
+                      onClick={() => copyToClipboard((dnsRecords as any).dkim2.value)}
+                      style={{ float: 'right' }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="dns-record">
-              <div className="dns-record-label">DMARC Record</div>
+              <div className="dns-record-label">DMARC Record ({dnsRecords.dmarc.type})</div>
               <div className="dns-record-host">
                 Host: <code>{dnsRecords.dmarc.host}</code>
               </div>

@@ -1,5 +1,6 @@
 import dns from 'dns';
 import { promisify } from 'util';
+import { config } from '../config.js';
 
 // Use Google's public DNS for more reliable lookups
 const resolver = new dns.Resolver();
@@ -47,15 +48,37 @@ export async function verifyDomainDns(
 
   // Check DKIM record
   try {
-    const dkimHost = `${dkimSelector}._domainkey.${domain}`;
-    const dkimRecords = await resolveTxt(dkimHost);
-    const dkimRecord = dkimRecords.flat().join('');
-    if (dkimRecord) {
-      results.dkim.found = dkimRecord;
-      // Verify the public key matches (normalize whitespace)
-      const normalizedFound = dkimRecord.replace(/\s+/g, '');
-      const normalizedExpected = results.dkim.expected.replace(/\s+/g, '');
-      results.dkim.valid = normalizedFound.includes(expectedDkimPublicKey);
+    // When using Brevo, check for Brevo's CNAME-based DKIM records
+    if (config.brevo.apiKey) {
+      const domainSlug = domain.replace(/\./g, '-');
+      let brevoValid = true;
+
+      for (const num of ['1', '2']) {
+        try {
+          const resolveCname = promisify(resolver.resolveCname.bind(resolver));
+          const cname = await resolveCname(`brevo${num}._domainkey.${domain}`);
+          const expected = `b${num}.${domainSlug}.dkim.brevo.com`;
+          if (!cname.some(c => c.replace(/\.$/, '') === expected)) {
+            brevoValid = false;
+          }
+        } catch {
+          brevoValid = false;
+        }
+      }
+
+      results.dkim.valid = brevoValid;
+      results.dkim.found = brevoValid ? 'Brevo DKIM CNAMEs configured' : null;
+      results.dkim.expected = `brevo1._domainkey → b1.${domainSlug}.dkim.brevo.com`;
+    } else {
+      // Self-hosted: check TXT record
+      const dkimHost = `${dkimSelector}._domainkey.${domain}`;
+      const dkimRecords = await resolveTxt(dkimHost);
+      const dkimRecord = dkimRecords.flat().join('');
+      if (dkimRecord) {
+        results.dkim.found = dkimRecord;
+        const normalizedFound = dkimRecord.replace(/\s+/g, '');
+        results.dkim.valid = normalizedFound.includes(expectedDkimPublicKey);
+      }
     }
   } catch (err) {
     // Record not found or DNS error
