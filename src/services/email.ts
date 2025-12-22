@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import BrevoTransport from 'nodemailer-brevo-transport';
 import { config } from '../config.js';
 import { prisma } from '../lib/prisma.js';
 import { decrypt } from '../lib/crypto.js';
@@ -44,6 +45,13 @@ function createTransport(dkimOptions?: {
   keySelector: string;
   privateKey: string;
 }): Transporter {
+  // Use Brevo HTTP API if API key is configured (bypasses SMTP port restrictions)
+  if (config.brevo.apiKey) {
+    return nodemailer.createTransport(
+      new BrevoTransport({ apiKey: config.brevo.apiKey })
+    );
+  }
+
   const transportOptions: nodemailer.TransportOptions & {
     host?: string;
     port?: number;

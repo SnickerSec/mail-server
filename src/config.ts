@@ -43,6 +43,10 @@ export const config = {
     secure: process.env.SMTP_SECURE === 'true',
   },
 
+  brevo: {
+    apiKey: process.env.BREVO_API_KEY || '',
+  },
+
   rateLimit: {
     max: parseInt(optionalEnv('RATE_LIMIT_MAX', '100'), 10),
     windowMs: parseInt(optionalEnv('RATE_LIMIT_WINDOW_MS', '60000'), 10),
