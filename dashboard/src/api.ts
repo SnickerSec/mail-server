@@ -113,7 +113,7 @@ export const api = {
   verifyDomain: (id: string) =>
     request<{ domain: { id: string; isVerified: boolean } }>(
       `/domains/${id}/verify`,
-      { method: 'POST' }
+      { method: 'POST', body: '{}' }
     ),
 
   getApiKeys: (domainId: string) =>
