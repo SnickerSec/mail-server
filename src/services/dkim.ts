@@ -30,10 +30,11 @@ export function getDnsRecords(domain: string, selector: string, publicKey: strin
   if (config.brevo.apiKey) {
     const domainSlug = domain.replace(/\./g, '-');
     return {
-      spf: {
+      brevoCode: {
         type: 'TXT',
         host: domain,
-        value: 'v=spf1 include:brevo.com ~all',
+        value: 'brevo-code:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        note: 'Get your unique Brevo code from Brevo → Settings → Domains',
         ttl: 3600,
       },
       dkim1: {

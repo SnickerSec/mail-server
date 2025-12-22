@@ -34,13 +34,26 @@ export async function verifyDomainDns(
     allValid: false,
   };
 
-  // Check SPF record
+  // Check SPF record (or Brevo code when using Brevo)
   try {
-    const spfRecords = await resolveTxt(domain);
-    const spfRecord = spfRecords.flat().find((r) => r.startsWith('v=spf1'));
-    if (spfRecord) {
-      results.spf.found = spfRecord;
-      results.spf.valid = true;
+    const txtRecords = await resolveTxt(domain);
+    const allRecords = txtRecords.flat();
+
+    if (config.brevo.apiKey) {
+      // When using Brevo, check for brevo-code
+      const brevoCode = allRecords.find((r) => r.startsWith('brevo-code:'));
+      if (brevoCode) {
+        results.spf.found = brevoCode;
+        results.spf.valid = true;
+        results.spf.expected = 'brevo-code:...';
+      }
+    } else {
+      // Self-hosted: check for SPF
+      const spfRecord = allRecords.find((r) => r.startsWith('v=spf1'));
+      if (spfRecord) {
+        results.spf.found = spfRecord;
+        results.spf.valid = true;
+      }
     }
   } catch (err) {
     // Record not found or DNS error

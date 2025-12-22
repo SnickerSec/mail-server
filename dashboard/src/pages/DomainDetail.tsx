@@ -43,9 +43,9 @@ function DomainDetail() {
   const [newKeyRaw, setNewKeyRaw] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
-    spf: { valid: boolean; found: string | null };
-    dkim: { valid: boolean; found: string | null };
-    dmarc: { valid: boolean; found: string | null };
+    spf: { valid: boolean; found: string | null; expected?: string };
+    dkim: { valid: boolean; found: string | null; expected?: string };
+    dmarc: { valid: boolean; found: string | null; expected?: string };
   } | null>(null);
 
   const fetchData = async () => {
@@ -204,7 +204,7 @@ function DomainDetail() {
             <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Verification Results:</div>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <span className={`badge ${verificationResult.spf.valid ? 'badge-success' : 'badge-danger'}`}>
-                SPF: {verificationResult.spf.valid ? '✓' : '✗'}
+                {verificationResult.spf.expected?.startsWith('brevo') ? 'Brevo Code' : 'SPF'}: {verificationResult.spf.valid ? '✓' : '✗'}
               </span>
               <span className={`badge ${verificationResult.dkim.valid ? 'badge-success' : 'badge-danger'}`}>
                 DKIM: {verificationResult.dkim.valid ? '✓' : '✗'}
@@ -218,22 +218,40 @@ function DomainDetail() {
 
         {dnsRecords && (
           <div>
-            <div className="dns-record">
-              <div className="dns-record-label">SPF Record ({dnsRecords.spf.type})</div>
-              <div className="dns-record-host">
-                Host: <code>{dnsRecords.spf.host}</code>
+            {/* Show Brevo code for Brevo setup, or SPF for self-hosted */}
+            {(dnsRecords as any).brevoCode ? (
+              <div className="dns-record">
+                <div className="dns-record-label">Brevo Code ({(dnsRecords as any).brevoCode.type})</div>
+                <div className="dns-record-host">
+                  Host: <code>{(dnsRecords as any).brevoCode.host}</code>
+                </div>
+                <div className="code-block">
+                  {(dnsRecords as any).brevoCode.value}
+                </div>
+                {(dnsRecords as any).brevoCode.note && (
+                  <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                    Note: {(dnsRecords as any).brevoCode.note}
+                  </p>
+                )}
               </div>
-              <div className="code-block">
-                {dnsRecords.spf.value}
-                <button
-                  className="btn btn-secondary copy-btn"
-                  onClick={() => copyToClipboard(dnsRecords.spf.value)}
-                  style={{ float: 'right' }}
-                >
-                  Copy
-                </button>
+            ) : (
+              <div className="dns-record">
+                <div className="dns-record-label">SPF Record ({dnsRecords.spf.type})</div>
+                <div className="dns-record-host">
+                  Host: <code>{dnsRecords.spf.host}</code>
+                </div>
+                <div className="code-block">
+                  {dnsRecords.spf.value}
+                  <button
+                    className="btn btn-secondary copy-btn"
+                    onClick={() => copyToClipboard(dnsRecords.spf.value)}
+                    style={{ float: 'right' }}
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Show single DKIM for self-hosted, or two DKIM CNAMEs for Brevo */}
             {(dnsRecords as any).dkim ? (
