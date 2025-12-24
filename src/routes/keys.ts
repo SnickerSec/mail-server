@@ -4,6 +4,7 @@ import { adminAuth } from '../middleware/adminAuth.js';
 import { prisma } from '../lib/prisma.js';
 import { generateApiKey, getKeyPrefix } from '../lib/crypto.js';
 import { createApiKeySchema } from '../schemas/index.js';
+import { config } from '../config.js';
 import type { CreateApiKeyBody } from '../types/index.js';
 
 const BCRYPT_ROUNDS = 12;
@@ -19,10 +20,13 @@ function calculateExpiresAt(expiresIn: string): Date | null {
 }
 
 export async function keyRoutes(fastify: FastifyInstance): Promise<void> {
+  // Rate limiting is applied globally in server.ts, this adds route-level config
   fastify.addHook('preHandler', adminAuth);
+  const routeRateLimit = { max: config.rateLimit.max, timeWindow: config.rateLimit.windowMs };
 
   fastify.get<{ Params: { domainId: string } }>(
     '/domains/:domainId/keys',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { domainId } = request.params;
 
@@ -60,6 +64,7 @@ export async function keyRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.post<{ Params: { domainId: string }; Body: CreateApiKeyBody }>(
     '/domains/:domainId/keys',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { domainId } = request.params;
 
@@ -117,6 +122,7 @@ export async function keyRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.patch<{ Params: { id: string }; Body: { isActive?: boolean } }>(
     '/keys/:id',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { id } = request.params;
       const { isActive } = request.body;
@@ -150,7 +156,7 @@ export async function keyRoutes(fastify: FastifyInstance): Promise<void> {
     }
   );
 
-  fastify.delete<{ Params: { id: string } }>('/keys/:id', async (request, reply) => {
+  fastify.delete<{ Params: { id: string } }>('/keys/:id', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const { id } = request.params;
 
     const apiKey = await prisma.apiKey.findUnique({ where: { id } });
@@ -167,6 +173,7 @@ export async function keyRoutes(fastify: FastifyInstance): Promise<void> {
   // Rotate an API key - generates a new key with same settings
   fastify.post<{ Params: { id: string }; Body: { expiresIn?: string } }>(
     '/keys/:id/rotate',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { id } = request.params;
       const { expiresIn } = request.body || {};

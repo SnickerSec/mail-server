@@ -5,12 +5,15 @@ import { encrypt } from '../lib/crypto.js';
 import { generateDkimKeyPair, getDnsRecords } from '../services/dkim.js';
 import { verifyDomainDns } from '../services/dnsVerification.js';
 import { createDomainSchema, paginationSchema } from '../schemas/index.js';
+import { config } from '../config.js';
 import type { CreateDomainBody, PaginationQuery } from '../types/index.js';
 
 export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
+  // Rate limiting is applied globally in server.ts, this adds route-level config
   fastify.addHook('preHandler', adminAuth);
+  const routeRateLimit = { max: config.rateLimit.max, timeWindow: config.rateLimit.windowMs };
 
-  fastify.get<{ Querystring: PaginationQuery }>('/domains', async (request, reply) => {
+  fastify.get<{ Querystring: PaginationQuery }>('/domains', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const { page, limit } = paginationSchema.parse(request.query);
     const skip = (page - 1) * limit;
 
@@ -53,7 +56,7 @@ export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
     });
   });
 
-  fastify.post<{ Body: CreateDomainBody }>('/domains', async (request, reply) => {
+  fastify.post<{ Body: CreateDomainBody }>('/domains', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const validation = createDomainSchema.safeParse(request.body);
 
     if (!validation.success) {
@@ -99,7 +102,7 @@ export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
     });
   });
 
-  fastify.get<{ Params: { id: string } }>('/domains/:id', async (request, reply) => {
+  fastify.get<{ Params: { id: string } }>('/domains/:id', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const { id } = request.params;
 
     const domain = await prisma.domain.findUnique({
@@ -141,6 +144,7 @@ export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.patch<{ Params: { id: string }; Body: { isActive?: boolean } }>(
     '/domains/:id',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { id } = request.params;
       const { isActive } = request.body;
@@ -168,7 +172,7 @@ export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
     }
   );
 
-  fastify.delete<{ Params: { id: string } }>('/domains/:id', async (request, reply) => {
+  fastify.delete<{ Params: { id: string } }>('/domains/:id', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const { id } = request.params;
 
     const domain = await prisma.domain.findUnique({ where: { id } });
@@ -184,6 +188,7 @@ export async function domainRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.post<{ Params: { id: string } }>(
     '/domains/:id/verify',
+    { config: { rateLimit: routeRateLimit } },
     async (request, reply) => {
       const { id } = request.params;
 

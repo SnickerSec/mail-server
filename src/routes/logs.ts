@@ -2,12 +2,15 @@ import { FastifyInstance } from 'fastify';
 import { adminAuth } from '../middleware/adminAuth.js';
 import { prisma } from '../lib/prisma.js';
 import { logsQuerySchema } from '../schemas/index.js';
+import { config } from '../config.js';
 import type { LogsQuery } from '../types/index.js';
 
 export async function logRoutes(fastify: FastifyInstance): Promise<void> {
+  // Rate limiting is applied globally in server.ts, this adds route-level config
   fastify.addHook('preHandler', adminAuth);
+  const routeRateLimit = { max: config.rateLimit.max, timeWindow: config.rateLimit.windowMs };
 
-  fastify.get<{ Querystring: LogsQuery }>('/logs', async (request, reply) => {
+  fastify.get<{ Querystring: LogsQuery }>('/logs', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const validation = logsQuerySchema.safeParse(request.query);
 
     if (!validation.success) {
@@ -70,7 +73,7 @@ export async function logRoutes(fastify: FastifyInstance): Promise<void> {
     });
   });
 
-  fastify.get('/logs/stats', async (request, reply) => {
+  fastify.get('/logs/stats', { config: { rateLimit: routeRateLimit } }, async (request, reply) => {
     const [total, sent, failed, recentActivity] = await Promise.all([
       prisma.emailLog.count(),
       prisma.emailLog.count({ where: { status: 'sent' } }),

@@ -45,10 +45,17 @@ export function generateApiKey(): string {
 
 export function generateSecurePassword(length: number = 24): string {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-  const randomBytes = crypto.randomBytes(length);
+  const charsetLength = charset.length;
+  // Use rejection sampling to avoid modulo bias
+  const maxValid = 256 - (256 % charsetLength);
   let password = '';
-  for (let i = 0; i < length; i++) {
-    password += charset[randomBytes[i] % charset.length];
+  while (password.length < length) {
+    const randomBytes = crypto.randomBytes(length - password.length);
+    for (let i = 0; i < randomBytes.length && password.length < length; i++) {
+      if (randomBytes[i] < maxValid) {
+        password += charset[randomBytes[i] % charsetLength];
+      }
+    }
   }
   return password;
 }
