@@ -1,13 +1,14 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+ARG CACHEBUST=1
 WORKDIR /app
 
 # Install dependencies for building
 COPY package*.json ./
 COPY prisma ./prisma/
 
-RUN npm ci
+RUN npm ci --prefer-offline=false
 
 # Copy source and build
 COPY tsconfig.json ./
@@ -28,6 +29,7 @@ COPY dashboard ./
 RUN npm run build
 
 # Production stage
+# Cache bust: 2025-12-25-v2
 FROM node:20-alpine AS production
 
 WORKDIR /app
