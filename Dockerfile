@@ -53,4 +53,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Push schema to database and start server
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
