@@ -43,10 +43,7 @@ COPY prisma ./prisma/
 
 RUN npm ci --omit=dev
 
-# Copy generated Prisma client from builder
-COPY --from=builder /app/src/generated ./src/generated/
-
-# Copy built files
+# Copy built files (includes compiled Prisma client in dist/generated/)
 COPY --from=builder /app/dist ./dist/
 COPY --from=dashboard-builder /app/dashboard/dist ./public/
 
