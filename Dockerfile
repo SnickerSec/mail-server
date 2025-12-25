@@ -43,14 +43,8 @@ COPY prisma ./prisma/
 
 RUN npm ci --omit=dev
 
-# Copy generated Prisma client from builder (already generated with correct version)
+# Copy generated Prisma client from builder
 COPY --from=builder /app/src/generated ./src/generated/
-# Copy prisma CLI and engines from builder for db push
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma/
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines/
-COPY --from=builder /app/node_modules/@prisma/config ./node_modules/@prisma/config/
-COPY --from=builder /app/node_modules/@prisma/dev ./node_modules/@prisma/dev/
 
 # Copy built files
 COPY --from=builder /app/dist ./dist/
