@@ -51,5 +51,12 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Push schema to database and start server
-CMD ["sh", "-c", "npx prisma db push --url \"$DATABASE_URL\" && node dist/index.js"]
+# Wait for database and push schema, then start server
+CMD ["sh", "-c", "\
+  echo 'Waiting for database...' && \
+  for i in 1 2 3 4 5 6 7 8 9 10; do \
+    npx prisma db push --url \"$DATABASE_URL\" && break; \
+    echo \"Database not ready, retry $i/10 in 5s...\"; \
+    sleep 5; \
+  done && \
+  node dist/index.js"]
